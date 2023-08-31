@@ -25,6 +25,14 @@ function custom_room_selection_load_start_index()
     return $start_index;
 }
 
+// Load position swaps from JSON file
+function custom_room_selection_load_position_swaps()
+{
+    $position_swaps_file = plugin_dir_path(__FILE__) . 'position-swaps.json';
+    $position_swaps = file_exists($position_swaps_file) ? json_decode(file_get_contents($position_swaps_file), true) : array();
+    return $position_swaps;
+}
+
 // Retrieve selected room and next rooms
 function custom_room_selection_get_rooms()
 {
@@ -83,6 +91,20 @@ function custom_room_selection_get_rooms()
         $next_week++;
     }
 
+    // Load position swaps
+    $position_swaps = custom_room_selection_load_position_swaps();
+
+    // Adjust the order of available rooms based on position swaps
+    foreach ($position_swaps as $swap) {
+        $index1 = array_search($swap['user1'], $available_rooms);
+        $index2 = array_search($swap['user2'], $available_rooms);
+        if ($index1 !== false && $index2 !== false) {
+            $temp = $available_rooms[$index1];
+            $available_rooms[$index1] = $available_rooms[$index2];
+            $available_rooms[$index2] = $temp;
+        }
+    }
+
     return array(
         'selected' => $selected_room,
         'next'     => $next_rooms,
@@ -94,7 +116,7 @@ function custom_room_selection_shortcode()
 {
     $rooms = custom_room_selection_get_rooms();
     ob_start();
-?>
+    ?>
     <h2>Selected room for this week</h2>
     <p>The selected room for <b>THIS</b> week is: <b><?php echo $rooms['selected']; ?></b></p>
     <?php if (!empty($rooms['next'])) : ?>
@@ -124,7 +146,7 @@ function custom_room_selection_shortcode()
             </tbody>
         </table>
     <?php endif; ?>
-<?php
+    <?php
     return ob_get_clean();
 }
 add_shortcode('custom_room_selection', 'custom_room_selection_shortcode');
