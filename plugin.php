@@ -8,6 +8,7 @@ Author: Tomislav Zecevic
 
 // Include necessary files
 require_once plugin_dir_path(__FILE__) . 'includes/enqueue-scripts.php';
+require_once plugin_dir_path(__FILE__) . 'includes/helpers.php';
 
 // Load ignored users from JSON file
 function custom_room_selection_load_ignored_users()
@@ -23,14 +24,6 @@ function custom_room_selection_load_start_index()
     $start_index_file = plugin_dir_path(__FILE__) . 'start-index.json';
     $start_index = file_exists($start_index_file) ? json_decode(file_get_contents($start_index_file)) : 0;
     return $start_index;
-}
-
-// Load position swaps from JSON file
-function custom_room_selection_load_position_swaps()
-{
-    $position_swaps_file = plugin_dir_path(__FILE__) . 'position-swaps.json';
-    $position_swaps = file_exists($position_swaps_file) ? json_decode(file_get_contents($position_swaps_file), true) : array();
-    return $position_swaps;
 }
 
 // Retrieve selected room and next rooms
@@ -89,20 +82,6 @@ function custom_room_selection_get_rooms()
             $next_rooms[] = $next_room;
         }
         $next_week++;
-    }
-
-    // Load position swaps
-    $position_swaps = custom_room_selection_load_position_swaps();
-
-    // Adjust the order of available rooms based on position swaps
-    foreach ($position_swaps as $swap) {
-        $index1 = array_search($swap['user1'], $available_rooms);
-        $index2 = array_search($swap['user2'], $available_rooms);
-        if ($index1 !== false && $index2 !== false) {
-            $temp = $available_rooms[$index1];
-            $available_rooms[$index1] = $available_rooms[$index2];
-            $available_rooms[$index2] = $temp;
-        }
     }
 
     return array(
