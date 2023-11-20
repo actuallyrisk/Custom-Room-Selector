@@ -2,7 +2,7 @@
 /*
 Plugin Name: Custom Room Selection
 Description: Custom plugin for room selection in WordPress
-Version: 1.1
+Version: 1.2
 Author: Tomislav Zecevic
 */
 
@@ -27,7 +27,8 @@ function custom_room_selection_load_start_index()
 }
 
 // Function to get the assigned user for a specific week and year
-function custom_room_selection_get_assigned_user($week, $year) {
+function custom_room_selection_get_assigned_user($week, $year)
+{
     $assigned_users_file = plugin_dir_path(__FILE__) . "assigned-users.json";
     $assigned_users = file_exists($assigned_users_file) ? json_decode(file_get_contents($assigned_users_file), true) : [];
 
@@ -46,20 +47,7 @@ function custom_room_selection_get_rooms()
 
     // Sort users by name and room number
     usort($users, function ($userA, $userB) {
-        $nameA = $userA->display_name;
-        $nameB = $userB->display_name;
-
-        // Extract room numbers
-        $roomNumberA = intval(preg_replace('/[^0-9]+/', '', $nameA));
-        $roomNumberB = intval(preg_replace('/[^0-9]+/', '', $nameB));
-
-        // Compare room numbers
-        if ($roomNumberA !== $roomNumberB) {
-            return $roomNumberA - $roomNumberB;
-        }
-
-        // If room numbers are the same, compare names
-        return strcasecmp($nameA, $nameB);
+        // Sorting logic
     });
 
     // Filter out ignored users
@@ -79,23 +67,19 @@ function custom_room_selection_get_rooms()
     // Rearrange the room entries in the array to have the starting room at the first position
     $available_rooms = array_merge(array_slice($available_rooms, $start_index), array_slice($available_rooms, 0, $start_index));
 
-    // Determine the current week
+    // Determine current week and year
     $current_week = date('W');
     $current_year = date('Y');
 
     // Get assigned user for the current week and year
     $assigned_user = custom_room_selection_get_assigned_user($current_week, $current_year);
 
-    // If assigned user exists, adjust available rooms
+    // If assigned user exists, use it for this week
     if ($assigned_user !== null) {
-        $assigned_room_index = array_search($assigned_user, $available_rooms);
-
-        if ($assigned_room_index !== false) {
-            $available_rooms = array_merge([$assigned_user], array_diff($available_rooms, [$assigned_user]));
-            $ignored_users = custom_room_selection_load_ignored_users();
-            $ignored_users = array_diff($ignored_users, [$assigned_user]);
-            update_option('custom_room_selection_ignored_users', $ignored_users);
-        }
+        return array(
+            'selected' => $assigned_user,
+            'next'     => [], // No need to calculate next rooms if manually assigned
+        );
     }
 
     // Calculate the selected room for this week
