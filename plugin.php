@@ -2,7 +2,7 @@
 /*
 Plugin Name: Custom Room Selection
 Description: Custom plugin for room selection in WordPress
-Version: 1.2
+Version: 1.1
 Author: Tomislav Zecevic
 */
 
@@ -76,9 +76,19 @@ function custom_room_selection_get_rooms()
 
     // If assigned user exists, use it for this week
     if ($assigned_user !== null) {
+        $next_rooms = array();
+        $next_week = $current_week + 1;
+        while (count($next_rooms) < 5) {
+            $next_room = $available_rooms[$next_week % count($available_rooms)];
+            if (!in_array($next_room, $next_rooms)) {
+                $next_rooms[] = $next_room;
+            }
+            $next_week++;
+        }
+
         return array(
             'selected' => $assigned_user,
-            'next'     => [], // No need to calculate next rooms if manually assigned
+            'next'     => $next_rooms,
         );
     }
 
